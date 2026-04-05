@@ -1,0 +1,14 @@
+torch>=2.0.0
+pytorch-lightning>=2.0.0
+torch-ema
+scipy
+numpy
+matplotlib
+pesq
+pystoi
+torchaudio
+librosa
+soundfile
+torch-pesq>=0.1.2
+transformers>=4.30.0  # For WavLM feature encoder
+pytz
