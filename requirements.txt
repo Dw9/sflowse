@@ -12,3 +12,4 @@ soundfile
 torch-pesq>=0.1.2
 transformers>=4.30.0  # For WavLM feature encoder
 pytz
+tqdm>=4.57.0

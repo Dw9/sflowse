@@ -4,9 +4,16 @@ Computes PESQ, SI-SDR, ESTOI, DNSMOS (SIG/BAK/OVRL/P808) for both models.
 
 Usage:
   python eval_metrics.py \
-      --resflowse_ckpt logs/resflowse_.../epoch=39_pesq=2.94.ckpt \
-      --flowse_ckpt VB_DMD_FLOWSE_ICASSP_2025.ckpt \
-      --data_dir /home/zhibo/workspace/VoiceBank_processed
+      --model_type resflowse \
+      --ckpt logs/resflowse_.../epoch=39_pesq=2.94.ckpt \
+      --data_dir /home/zhibo/workspace/VoiceBank_processed \
+      --no_ema --split test
+
+  python eval_metrics.py \
+      --model_type flowse \
+      --ckpt VB_DMD_FLOWSE_ICASSP_2025.ckpt \
+      --data_dir /home/zhibo/workspace/VoiceBank_processed \
+      --N 5 --split test
 
 Requirements (install if missing):
   pip install onnxruntime
