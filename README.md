@@ -82,8 +82,3 @@ python bench_jetson.py --mode_id <m> --n_real 824 --subset_n 100 --calib_full824
 python make_figures.py && python make_tables.py
 python check_numbers.py --selftest && python check_numbers.py
 ```
-
-## License / citation
-
-See the paper for the full measurement protocol and claims. If you use the on-device
-protocol, cite the paper (title above).
