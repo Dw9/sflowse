@@ -271,9 +271,13 @@ class ResFlowSEModel(pl.LightningModule):
             else:
                 epsilon = torch.zeros_like(y)
 
-        # Concatenate [epsilon, y] as 2-channel complex input
-        # NCSNpp will decompose this to 4 real channels internally
-        dnn_input = torch.cat([epsilon, y], dim=1)  # [B, 2, F, T] complex
+        # Backbone input width is configurable (NCSNpp.input_channels):
+        #   4 (default) -> feed [epsilon, y] (2 complex ch); reproduces M3.
+        #   2           -> feed y only (1 complex ch); two-channel ablation.
+        if getattr(self.dnn, "input_channels", 4) == 2:
+            dnn_input = y                                  # [B, 1, F, T] complex
+        else:
+            dnn_input = torch.cat([epsilon, y], dim=1)     # [B, 2, F, T] complex
 
         if self.energy_conditioning:
             # Energy-adaptive conditioning: feed log-energy of input to NCSNpp.

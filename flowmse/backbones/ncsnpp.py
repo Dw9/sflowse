@@ -40,6 +40,12 @@ class NCSNpp(nn.Module):
     @staticmethod
     def add_argparse_args(parser):
         # TODO: add additional arguments of constructor, if you wish to modify them.
+        parser.add_argument(
+            "--input_channels", type=int, default=None,
+            help="Real input channels (2 per complex channel). None -> 4 (= [eps, y], "
+                 "reproduces M3 exactly). Set 2 for the two-channel ablation (y only, "
+                 "1 complex channel). Output side is unaffected (num_channels stays 4).",
+        )
         return parser
 
     def __init__(
@@ -64,6 +70,7 @@ class NCSNpp(nn.Module):
         image_size=256,
         embedding_type="fourier",
         dropout=0.0,
+        input_channels=None,
         **unused_kwargs,
     ):
         super().__init__()
@@ -96,7 +103,14 @@ class NCSNpp(nn.Module):
         combine_method = progressive_combine.lower()
         combiner = functools.partial(Combine, method=combine_method)
 
-        num_channels = 4  # x.real, x.imag, y.real, y.imag
+        num_channels = 4  # x.real, x.imag, y.real, y.imag (OUTPUT width; left unchanged)
+        # Input width is DECOUPLED from output width for the two-channel ablation:
+        #   None  -> 4 real ch (= [eps, y], reproduces M3 exactly)
+        #   2     -> 2 real ch (y only; single complex channel)
+        # Only the first conv and the input-pyramid combiners change; the output side
+        # (progressive output + output_layer) is byte-identical to M3.
+        input_ch = num_channels if input_channels is None else input_channels
+        self.input_channels = input_ch
         self.output_layer = nn.Conv2d(num_channels, 2, 1)
 
         modules = []
@@ -189,9 +203,9 @@ class NCSNpp(nn.Module):
 
         channels = num_channels
         if progressive_input != "none":
-            input_pyramid_ch = channels
+            input_pyramid_ch = input_ch
 
-        modules.append(conv3x3(channels, nf))
+        modules.append(conv3x3(input_ch, nf))
         hs_c = [nf]
 
         in_ch = nf
@@ -309,16 +323,14 @@ class NCSNpp(nn.Module):
         modules = self.all_modules
         m_idx = 0
 
-        # Convert real and imaginary parts of (x,y) into four channel dimensions
-        x = torch.cat(
-            (
-                x[:, [0], :, :].real,
-                x[:, [0], :, :].imag,
-                x[:, [1], :, :].real,
-                x[:, [1], :, :].imag,
-            ),
-            dim=1,
-        )
+        # Convert real/imag of each complex channel into 2 real channels (interleaved).
+        # C complex channels -> 2*C real channels. C=2 -> 4 (= original [eps,y] layout);
+        # C=1 -> 2 (two-channel ablation). Matches self.input_channels.
+        parts = []
+        for _i in range(x.shape[1]):
+            parts.append(x[:, [_i], :, :].real)
+            parts.append(x[:, [_i], :, :].imag)
+        x = torch.cat(parts, dim=1)
 
         if self.embedding_type == "fourier":
             # Gaussian Fourier features embeddings.

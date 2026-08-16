@@ -4,17 +4,31 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Function
-from torch.utils.cpp_extension import load
 
+
+# --- NCSN++ switches (T1) ---
+# fused_act is dead code in this project (zero call sites; model uses
+# nn.LeakyReLU/nn.SiLU). The ONLY thing we need here is that importing this
+# module must NOT trigger nvcc compilation in ONNX-export / no-toolkit envs.
+# NCSNPP_SKIP_CUDA_LOAD / NCSNPP_PURE_PYTORCH(=master) skip the jit compile.
+_SKIP_CUDA_LOAD = (
+    os.environ.get("NCSNPP_SKIP_CUDA_LOAD", "0") == "1"
+    or os.environ.get("NCSNPP_PURE_PYTORCH", "0") == "1"
+)
 
 module_path = os.path.dirname(__file__)
-fused = load(
-    "fused",
-    sources=[
-        os.path.join(module_path, "fused_bias_act.cpp"),
-        os.path.join(module_path, "fused_bias_act_kernel.cu"),
-    ],
-)
+if not _SKIP_CUDA_LOAD:
+    from torch.utils.cpp_extension import load
+
+    fused = load(
+        "fused",
+        sources=[
+            os.path.join(module_path, "fused_bias_act.cpp"),
+            os.path.join(module_path, "fused_bias_act_kernel.cu"),
+        ],
+    )
+else:
+    fused = None  # pure-PyTorch / skip-load mode: do not compile the CUDA ext
 
 
 class FusedLeakyReLUFunctionBackward(Function):

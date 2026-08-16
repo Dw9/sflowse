@@ -34,3 +34,30 @@ WSJ0*
 *.h5
 *.pb
 *.tflite
+
+# ---- 2026-08-16 reviewer-facing curation: code + README only ----
+# root md docs (session/audit artifacts) — README is the single reviewer-facing doc
+/*.md
+!README.md
+# measurement artifacts (kept out of the repo; provenance documented in README)
+*.json
+*.sha256
+*.npy
+*.log
+*.csv
+eval_dns/
+MDPI-PAPER/
+third_party/
+remote_ckpt/
+logs/
+lightning_logs/
+__pycache__/
+.venv/
+.pi-*
+.pi-*/
+.claude-pane
+.kimi*
+A_prime_submission/
+archive_*/
+specom_papers/
+spl_submission_0406/

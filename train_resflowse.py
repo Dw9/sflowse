@@ -73,6 +73,9 @@ if __name__ == "__main__":
                         help="Gradient accumulation steps (effective_batch = batch * gpus * this)")
     parser.add_argument("--ckpt", type=str, default=None,
                         help="Path to checkpoint for weight initialization")
+    parser.add_argument("--resume_ckpt", type=str, default=None,
+                        help="Path to checkpoint to RESUME training: restores optimizer/scheduler/epoch "
+                             "via trainer.fit(ckpt_path=...). Use INSTEAD of --ckpt to continue a run.")
 
     # ResFlowSEModel arguments
     ResFlowSEModel.add_argparse_args(
@@ -171,5 +174,9 @@ if __name__ == "__main__":
         model.on_load_checkpoint(ckpt)
         print("  Pretrained weights loaded successfully!")
 
-    # Train
-    trainer.fit(model)
+    # Train (resume restores optimizer/scheduler/epoch from ckpt_path; --ckpt only inits weights)
+    if args.resume_ckpt:
+        print(f"RESUMING training (optimizer+scheduler+epoch) from: {args.resume_ckpt}")
+        trainer.fit(model, ckpt_path=args.resume_ckpt)
+    else:
+        trainer.fit(model)

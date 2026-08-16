@@ -3,17 +3,36 @@ import os
 import torch
 from torch.nn import functional as F
 from torch.autograd import Function
-from torch.utils.cpp_extension import load
 
+
+# --- NCSN++ switches (T1) ---
+# NCSNPP_PURE_UPFIRDN : route upfirdn2d() through the native (pure-PyTorch) path on GPU too.
+# NCSNPP_SKIP_CUDA_LOAD: do NOT jit-compile the CUDA ext at import (ONNX export / no-toolkit).
+# NCSNPP_PURE_PYTORCH  : master switch = sets both above.
+# If load is skipped we MUST also use the native path, else UpFirDn2d.apply hits op=None.
+_SKIP_CUDA_LOAD = (
+    os.environ.get("NCSNPP_SKIP_CUDA_LOAD", "0") == "1"
+    or os.environ.get("NCSNPP_PURE_PYTORCH", "0") == "1"
+)
+_PURE_UPFIRDN = (
+    os.environ.get("NCSNPP_PURE_UPFIRDN", "0") == "1"
+    or os.environ.get("NCSNPP_PURE_PYTORCH", "0") == "1"
+)
+_USE_NATIVE = _PURE_UPFIRDN or _SKIP_CUDA_LOAD
 
 module_path = os.path.dirname(__file__)
-upfirdn2d_op = load(
-    "upfirdn2d",
-    sources=[
-        os.path.join(module_path, "upfirdn2d.cpp"),
-        os.path.join(module_path, "upfirdn2d_kernel.cu"),
-    ],
-)
+if not _SKIP_CUDA_LOAD:
+    from torch.utils.cpp_extension import load
+
+    upfirdn2d_op = load(
+        "upfirdn2d",
+        sources=[
+            os.path.join(module_path, "upfirdn2d.cpp"),
+            os.path.join(module_path, "upfirdn2d_kernel.cu"),
+        ],
+    )
+else:
+    upfirdn2d_op = None  # pure-PyTorch / skip-load mode: do not compile the CUDA ext
 
 
 class UpFirDn2dBackward(Function):
@@ -143,7 +162,7 @@ class UpFirDn2d(Function):
 
 
 def upfirdn2d(input, kernel, up=1, down=1, pad=(0, 0)):
-    if input.device.type == "cpu":
+    if _USE_NATIVE or input.device.type == "cpu":
         out = upfirdn2d_native(
             input, kernel, up, up, down, down, pad[0], pad[1], pad[0], pad[1]
         )

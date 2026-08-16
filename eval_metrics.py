@@ -41,7 +41,10 @@ from flowmse.model import VFModel
 from flowmse.sampling import get_white_box_solver
 from flowmse.util.other import si_sdr, pad_spec
 
-torch.serialization.add_safe_globals([SpecsDataModule])
+try:
+    torch.serialization.add_safe_globals([SpecsDataModule])  # torch>=2.3
+except AttributeError:
+    pass  # torch<2.3: not needed for the loading paths below
 
 SR = 16000
 
