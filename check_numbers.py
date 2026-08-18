@@ -13,7 +13,7 @@ LEDGER = "RESULTS_LEDGER.md"
 # en_manuscript_electronics),而**当前真正的稿件 draft_v2_measurement.md 从未被检查** ——
 # 于是"交付前跑 check_numbers.py"这条纪律长期空转,只在检 cover_letter。
 # 教训:本工具必须自己报告"哪些目标不存在",不能静默 skip 后打印"全部通过"。
-DEFAULT_DOCS = ["MDPI-PAPER/draft_v2_measurement.md",   # ← 当前稿件,主检对象
+DEFAULT_DOCS = ["MDPI-PAPER/draft_initial_review.md",   # ← 当前稿件真源(v2 初始版,2026-08-17 起取代精简版)
                 "MDPI-PAPER/cover_letter.md"]
 
 # 关注"实验指标量级"的数字:PESQ~1-4, SI-SDR~10-20, 三位小数指标, 参数量M。
