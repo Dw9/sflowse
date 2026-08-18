@@ -53,7 +53,12 @@ def drop_first_per_pass(rtf, n_passes):
 
 def main():
     out = {"script": "analyze_firstfile_p95.py", "bench_files_per_pass": BENCH,
-           "percentile": "np.percentile linear", "sources": []}
+           "percentile": "np.percentile linear",
+           "rank_convention": ("rank_from_slowest_within_pass counts, inside one pass of "
+                               f"{BENCH} files, the files strictly slower than that pass's "
+                               "first file; pooled-percentile equivalence: within-pass rank/N "
+                               "equals pooled rank/(N*passes) since passes are iid draws"),
+           "sources": []}
     for spec in SOURCES:
         d = np.load(spec["npy"], allow_pickle=True).item()
         # arm A only for the interleaved A/B artifact (ResFlowSE single-step)
@@ -70,8 +75,10 @@ def main():
         for p in range(n_passes):
             seg = rtf[p * BENCH:(p + 1) * BENCH]
             f = seg[0]
+            rank = int(np.sum(seg > f))  # within THIS pass: files strictly slower
             firsts.append(dict(pass_=p, rtf=float(f),
-                               rank_from_slowest=int(np.sum(seg > f)),
+                               rank_from_slowest_within_pass=rank,
+                               pct_from_slowest_within_pass=round(100.0 * rank / len(seg), 2),
                                pass_p95=float(np.percentile(seg, 95)),
                                first_over_pass_p95=float(f / np.percentile(seg, 95))))
 
