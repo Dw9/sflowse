@@ -24,8 +24,12 @@ def main():
         for b in bad:
             print("  ", b)
         sys.exit(1)
+    rules = [i + 1 for i, ln in enumerate(tex.split(chr(10))) if ln.strip() in ("---", "***", "___")]
+    if rules:
+        print(f"[FAIL] stray horizontal-rule paragraphs at tex lines {rules}")
+        sys.exit(1)
     n = len(re.findall(r"\\(?:sub)*section\{", tex))
-    print(f"[ok] {n} 个节标题均无内嵌编号")
+    print(f"[ok] {n} 个节标题均无内嵌编号; 无游离分隔线")
 
 
 if __name__ == "__main__":
