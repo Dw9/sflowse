@@ -15,6 +15,17 @@ import collections
 import re
 import sys
 
+ZH_FROZEN = True  # 2026-08-20 用户裁定: 中文轨道自 v24 起废弃(ZH md 头部有停更声明), EN 为唯一真源。
+                  # 本门禁随之退役: 退出码恒 0 并打印退役说明, 防止对冻结 ZH 假绿/假红。
+
+def _retired():
+    print('[RETIRED] ZH track frozen since v24 (user ruling 2026-08-20); EN (MDPI-PAPER/draft_initial_review.md) is the sole source of truth.')
+    print('[RETIRED] This gate no longer compares EN/ZH. Last pre-freeze comparison state: hard tier 34/34 balanced (2026-08-20 R2 round).')
+    return 0
+
+if ZH_FROZEN:
+    raise SystemExit(_retired())
+
 EN = "MDPI-PAPER/draft_initial_review.md"
 ZH = "MDPI-PAPER/draft_initial_review_zh.md"
 
