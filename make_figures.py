@@ -85,7 +85,7 @@ pq_se = [seeded[f"N={n}"]["pesq_std"] for n in ns]
 cost = [sweep[f"N={n}"]["rtf"]["mean"] for n in ns]
 ax.errorbar(cost, pq, yerr=pq_se, fmt="o-", capsize=3, label="FlowSE (N=1..5; bars = K=3 seed std)")
 m3_p = m3["metrics"]["pesq"]["mean"]
-ax.plot([ab], [m3_p], "s", color="C3", label="ResFlowSE single-step (ours, deterministic)")
+ax.plot([ab], [m3_p], "s", color="C3", label="M3 single-step (ours, deterministic)")
 # GTCRN: 自测同管线 PESQ(eval_dns/gtcrn_vctk.json 直读, 不手填; M46 核过) + 同板实测 RTF
 gtq = load("eval_dns/gtcrn_vctk.json")["measured_mean_std"]["pesq"]  # [mean, std]
 # M55-1: GTCRN 确定性模型, 去误差棒(原 yerr=[gtq[1]] 为逐文件 std, 与 FlowSE 的 seed std 语义混口径)
