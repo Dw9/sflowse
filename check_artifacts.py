@@ -19,6 +19,18 @@ def sha256(path):
 
 def check_sidecars():
     bad = []
+    # [SRC:] 引用的 .npy 也入域(kimi v5 二刀要求): 必须在盘且带哈希核验过的 sidecar
+    md_txt = open(MD, encoding="utf-8").read()
+    import re as _re
+    for m in _re.finditer(r"\[SRC:[^\]]*\]", md_txt):
+        for f in _re.findall(r"([\w/*]+\.npy)", m.group()):
+            if "*" in f:
+                continue
+            sc = f + ".sha256"
+            if not os.path.exists(sc):
+                bad.append(f"MISSING npy sidecar: {sc}")
+            elif open(sc).read().split()[0] != sha256(f):
+                bad.append(f"HASH MISMATCH (npy): {sc}")
     targets = sorted(glob.glob("*.json"))
     if not targets:
         return ["no json artifacts found at all"]
