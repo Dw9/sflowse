@@ -25,7 +25,7 @@ def parse(tex):
         if re.match(r"\s*\\end\{(table|figure)\}", ln):
             env = None
         # 提及(含表注/单元格文本; 逐行扫, 忽略 latex 命令头)
-        for m2 in re.finditer(r"\b(Tables|Figures|Table|Figure)\s+([0-9]+(?:\s*[,–-]\s*[0-9]+)*(?:\s+and\s+[0-9]+)?)", ln):
+        for m2 in re.finditer(r"\b(Tables|Figures|Table|Figure|Figs\.|Fig\.)\s*\.?\s*([0-9]+(?:\s*[,–-]\s*[0-9]+)*(?:\s+and\s+[0-9]+)?)", ln):
             kind = "table" if m2.group(1).lower().startswith("table") else "figure"
             body = m2.group(2)
             for num in re.findall(r"[0-9]+", body):
@@ -88,7 +88,15 @@ def selftest():
         print("[SELFTEST FAIL] 有表未被引用应非零退出"); ok = False
     else:
         print(f"[SELFTEST PASS] 未引用表被拦 exit={r2.returncode}")
-    os.unlink(t1); os.unlink(t2)
+    with tempfile.NamedTemporaryFile("w", suffix=".tex", delete=False) as f:
+        f.write("see Fig. 2 here\n\\begin{figure}\\caption{a}\\end{figure}\nFigure 1 later\n\\begin{figure}\\caption{b}\\end{figure}\n")
+        t3 = f.name
+    r3 = subprocess.run([sys.executable, __file__, t3], capture_output=True, text=True)
+    if r3.returncode == 0:
+        print("[SELFTEST FAIL] 缩写前引(Fig. 2 先于 Figure 1)应非零退出"); ok = False
+    else:
+        print(f"[SELFTEST PASS] 缩写前引被拦 exit={r3.returncode}")
+    os.unlink(t1); os.unlink(t2); os.unlink(t3)
     return 0 if ok else 1
 
 
