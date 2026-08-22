@@ -8,7 +8,7 @@
 """
 import glob, hashlib, json, os, re, sys
 
-MD = "MDPI-PAPER/draft_initial_review.md"
+MD = "MDPI-PAPER/manuscript.tex"  # 2026-08-22 起单源=tex(md 退役)
 THERMAL = [("sweep_maxn_v2.json", 1.94), ("sweep_25w_v2.json", 0.90),
            ("bench_orin_15w_v6.json", 1.33), ("bench_orin_10w_v6.json", 2.13)]
 
