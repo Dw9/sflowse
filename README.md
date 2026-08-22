@@ -22,8 +22,22 @@ Two quantities, both on the same hardware, combine into a deployment decision ru
   solver-step count that stays under RTF = 1, reported for both the per-file mean and p95
   criteria (MAXN: 6/5; 25 W / 15 W / 10 W: 2/2 each).
 
-Rule: if N_max ≥ N\*, keep the solver; if N_max < N\*, only solver-free retraining meets the
-budget. On this board, every constrained power budget selects retraining.
+Conditional decision rule (on this corpus, among the compared recipes): where N_max ≥ N\*,
+keeping the solver is feasible and preferred; where N_max < N\*, only retraining reaches the
+retrained model's PESQ quality. On this board, every constrained power budget selects retraining.
+
+## Model checkpoints
+
+| Checkpoint | Role | SHA-256 | Where |
+|---|---|---|---|
+| FlowSE teacher (VB-DMD) | Released generative teacher; truncation runs and warm-start initialization | `9f4502703ccb9b252135884f1d72cb64bc6dbd23d0f23dc8b01c1b2f07bf329c` | [Google Drive — VB-DMD checkpoint](https://drive.google.com/file/d/1PgzFSAu2t3BX8znNuPKNZdvaOSEXeo88/view) (from the [upstream FlowSE repository](https://github.com/seongq/flowmse); other upstream checkpoints are listed there) |
+| ResFlowSE (M3, `sflowse.ckpt`) | Single-step retrained model — the paper's main model | `7c3e3a3e3f65028bb47a856f8a56f78dc81860419df7283cec7bf51f543d0196` | released upon paper acceptance |
+| cold @epoch 24 | Initialization-ablation baseline (random init) | `44eb87bdc91fccf5de6d473c94ce347f951300687e7b17d1e47cdf9246625c58` | released upon paper acceptance |
+| warm @epoch 36 | Initialization ablation (FlowSE-weights init) | `efeacbce4cca239aa6682b2a08e383de7d5c19cce5865efbaa2c9428ab86b5c4` | released upon paper acceptance |
+
+Checkpoints are selected by best validation PESQ on a 200-file training-side validation subset
+(cold: epoch 24; warm: epoch 36; M3: released epoch 39 — the end of a staged multi-run training
+schedule; see the paper's §5 for the full training graphs).
 
 ## Repository map
 
@@ -43,8 +57,12 @@ budget. On this board, every constrained power budget selects retraining.
 | `p4_precheck.py` | Power-telemetry sampling-validity precheck (falsification gate for per-utterance energy) |
 | `onnx_smoke.py` | Export-path probing (complex-tensor boundary) |
 | `p7_chunk_quality.py` | Chunked-inference quality cost (offline feasibility boundary) |
+| `nfe_energy_n1to5.py`, `n56_perfile.py` | Per-N energy on-device pass (N=1–5) and MAXN N=5/6 per-file RTF arrays (p95 bootstrap source) |
+| `analyze_firstfile_p95.py` | First-retained-file sensitivity analysis |
 | `make_figures.py`, `make_tables.py` | Paper figures and tables, generated **directly from measurement artifacts** (no hand-entered numbers) |
 | `check_numbers.py` | Number-traceability guard: every manuscript number must trace to the data ledger; `--selftest` verifies the guard fails on known-bad inputs (fail-closed) |
+| `check_artifacts.py` | Artifact guard: SHA-256 sidecar integrity over all measurement JSONs (plus SRC-cited NPYs) and unique-source checks on the thermal drift values; fail-closed with `--selftest` |
+| `check_reforder.py`, `check_headings.py` | Reference first-appearance order; heading/structure guards |
 
 ## Reproducibility discipline
 
